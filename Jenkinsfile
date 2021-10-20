@@ -1,5 +1,9 @@
 pipeline{
-    agent{label "agentfarm"} 
+    agent{label "agentfarm"}
+    environment {
+    	KEY_FILE = '/home/ubuntu/ .ssh/vm-instancekey.pem'
+    	USER = 'ubuntu'
+    } 
     stages {
         stage('Delete the workspace') {
 	    steps {
@@ -27,9 +31,18 @@ pipeline{
 		stage('Run ansible-lint against playbooks') {
 		    steps{
 		        sh 'docker run --rm -v $WORKSPACE/playbooks:/data cytopia/ansible-lint apache-install.yml'
-			sh 'docker run --rm -v $WORKSPACE/playbooks:/data cytopia/ansible-lint website-update.yml'
-			sh 'docker run --rm -v $WORKSPACE/playbooks:/data cytopia/ansible-lint website-test.yml'
+			    sh 'docker run --rm -v $WORKSPACE/playbooks:/data cytopia/ansible-lint website-update.yml'
+			    sh 'docker run --rm -v $WORKSPACE/playbooks:/data cytopia/ansible-lint website-test.yml'
 		    }
 		}
-            }
+		stage('Install apache & update website'){
+			steps{
+				sh 'ansible-playbook -u $USER --private-key $KEY-FILE -i $WORKSPACE/host_inventory $WORKSPACE/playbooks/apache-install.yml'
+				sh 'ansible-playbook -u $USER --private-key $KEY-FILE -i $WORKSPACE/host_inventory $WORKSPACE/playbooks/website-update.yml'
+		}
+		stage('Test website'){
+			steps{
+				sh 'ansible-playbook -u $USER --private-key $KEY-FILE -i $WORKSPACE/host_inventory $WORKSPACE/playbooks/website-test.yml'
+		}		
+    }
 }
