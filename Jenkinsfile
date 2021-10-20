@@ -43,6 +43,7 @@ pipeline{
 		stage('Test website'){
 			steps{
 				sh 'ansible-playbook -u $USER --private-key $KEY-FILE -i $WORKSPACE/host_inventory $WORKSPACE/playbooks/website-test.yml'
+		    }
 		}		
     }
 }
